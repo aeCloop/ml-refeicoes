@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d90429" />
+  <title>ML Refeições</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ML Refeições" />
+</head>
+<body>
+  <!-- Topo -->
+  <header class="topbar">
+    <div class="top-left">
+      <div class="logo">ML</div>
+      <div class="top-title">
+        <div class="storeName" id="storeName">ML Refeições</div>
+        <div class="storeMeta">
+          <span class="dot ok" id="storeDot"></span>
+          <span id="storeStatus">Aberto</span>
+          <span class="sep">•</span>
+          <span id="storeDelivery">Entrega grátis</span>
+          <span class="sep">•</span>
+          <span id="storeMinOrder">Sem pedido mínimo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnInstall" class="iconBtn hidden" title="Instalar">⬇️</button>
+      <button id="btnOpenSearch" class="iconBtn" title="Buscar">🔎</button>
+      <button id="btnGoAdmin" class="iconBtn" title="ADM">⚙️</button>
+    </div>
+  </header>
+
+  <!-- Busca (overlay simples) -->
+  <div id="searchOverlay" class="overlay hidden">
+    <div class="overlayCard">
+      <div class="row">
+        <strong>Buscar no cardápio</strong>
+        <button id="btnCloseSearch" class="iconBtn">✖️</button>
+      </div>
+      <input id="search" type="search" placeholder="Ex: frango, bife..." autocomplete="off" />
+      <button id="btnClearSearch" class="ghost full">Limpar</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <!-- CATEGORIAS (chips) -->
+    <section id="catBar" class="catBar"></section>
+
+    <!-- TELA: INÍCIO -->
+    <section id="viewHome" class="view">
+      <div class="sectionTitle">
+        <h2>Cardápio</h2>
+        <p>Escolha seus pratos e finalize no WhatsApp.</p>
+      </div>
+      <div id="menuList" class="menuList"></div>
+    </section>
+
+    <!-- TELA: PEDIDOS (cliente) -->
+    <section id="viewOrders" class="view hidden">
+      <div class="sectionTitle">
+        <h2>Meus pedidos</h2>
+        <p>Fica salvo neste aparelho.</p>
+      </div>
+      <div id="myOrdersList" class="myOrdersList"></div>
+    </section>
+
+    <!-- TELA: CARRINHO -->
+    <section id="viewCart" class="view hidden">
+      <div class="sectionTitle">
+        <h2>Carrinho</h2>
+        <p>Revise antes de finalizar.</p>
+      </div>
+
+      <div id="cartList" class="cartList"></div>
+
+      <div class="summary">
+        <div class="sumRow"><span>Subtotal</span><strong id="sumSubtotal">R$ 0,00</strong></div>
+        <div class="sumRow"><span>Entrega</span><strong id="sumDelivery">Grátis</strong></div>
+        <div class="sumRow total"><span>Total</span><strong id="sumTotal">R$ 0,00</strong></div>
+
+        <button id="btnCheckout" class="primary full">Finalizar pedido</button>
+      </div>
+    </section>
+
+    <!-- TELA: CHECKOUT -->
+    <section id="viewCheckout" class="view hidden">
+      <div class="sectionTitle">
+        <h2>Finalizar</h2>
+        <p>Seus dados ficam salvos pra próxima vez.</p>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <strong>Dados do cliente</strong>
+          <button id="btnEditProfile" class="ghost">Editar</button>
+        </div>
+
+        <label>Nome <span class="req">*</span>
+          <input id="cName" type="text" placeholder="Ex: João" />
+        </label>
+
+        <label>Telefone <span class="req">*</span>
+          <input id="cPhone" type="tel" inputmode="numeric" placeholder="Ex: 91 99999-9999" />
+        </label>
+
+        <label>Endereço <span class="req">*</span>
+          <input id="cAddress" type="text" placeholder="Rua, número, bairro" />
+        </label>
+
+        <label>Referência <span class="req">*</span>
+          <input id="cRef" type="text" placeholder="Ex: Portão azul / perto do mercado" />
+        </label>
+
+        <hr class="hr" />
+
+        <strong>Pagamento</strong>
+
+        <label>Forma <span class="req">*</span>
+          <select id="cPay">
+            <option value="">Selecione...</option>
+            <option value="PIX">Pix</option>
+            <option value="DINHEIRO">Dinheiro</option>
+            <option value="CARTAO">Cartão</option>
+          </select>
+        </label>
+
+        <div id="trocoWrap" class="hidden">
+          <label>Troco para (R$)
+            <input id="cTroco" type="number" inputmode="decimal" step="0.01" placeholder="Ex: 50,00" />
+          </label>
+        </div>
+
+        <div id="pixBox" class="pixBox hidden">
+          <div class="pixTitle">Pix (obrigatório enviar comprovante)</div>
+          <div class="pixLine"><span>Chave:</span> <strong id="pixKey"></strong></div>
+          <div class="pixLine"><span>Banco:</span> <strong id="pixBank"></strong></div>
+          <div class="pixLine"><span>Nome:</span> <strong id="pixName"></strong></div>
+          <button id="btnCopyPix" class="ghost full">Copiar chave Pix</button>
+
+          <label style="margin-top:10px;">Comprovante do Pix <span class="req">*</span>
+            <input id="pixProof" type="file" accept="image/*" capture="environment" />
+          </label>
+          <p class="hint">O comprovante será enviado junto quando possível. Se não der, você anexa no WhatsApp.</p>
+        </div>
+
+        <label>Observações (opcional)
+          <textarea id="cObs" rows="3" placeholder="Ex: sem cebola / caprichar na farofa"></textarea>
+        </label>
+
+        <div class="row gap">
+          <button id="btnBackCart" class="ghost">Voltar</button>
+          <button id="btnSendWhats" class="primary">Enviar no WhatsApp</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="viewAdmin" class="view hidden">
+      <div class="adminTop">
+        <button id="btnBackApp" class="ghost">← Voltar</button>
+        <h2>Área ADM</h2>
+      </div>
+
+      <div id="adminLocked" class="card">
+        <p><strong>Acesso restrito</strong></p>
+        <label>Senha ADM
+          <input id="admPass" type="password" placeholder="Defina/entre com a senha" />
+        </label>
+        <div class="row gap">
+          <button id="btnSetAdmPass" class="ghost">Definir senha</button>
+          <button id="btnAdmLogin" class="primary">Entrar</button>
+        </div>
+        <p class="hint">No MVP a senha fica no aparelho. Depois colocamos login real.</p>
+      </div>
+
+      <div id="adminPanel" class="hidden">
+        <div class="adminTabs">
+          <button class="aTab active" data-atab="orders">Pedidos</button>
+          <button class="aTab" data-atab="menu">Cardápio</button>
+          <button class="aTab" data-atab="settings">Config</button>
+        </div>
+
+        <!-- Pedidos -->
+        <div id="aOrders" class="aPane active">
+          <div class="row gap">
+            <select id="admFilter">
+              <option value="ALL">Todos</option>
+              <option value="ATIVO">Ativos</option>
+              <option value="AGUARDANDO_PAGAMENTO">Aguardando pagamento</option>
+              <option value="PAGO">Pago</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+            <button id="btnAdmRefresh" class="ghost">Atualizar</button>
+          </div>
+
+          <div id="admOrdersList" class="admOrdersList"></div>
+        </div>
+
+        <!-- Cardápio -->
+        <div id="aMenu" class="aPane">
+          <div class="row gap">
+            <button id="btnAddItem" class="primary">+ Novo item</button>
+            <button id="btnResetMenu" class="ghost">Resetar padrão</button>
+          </div>
+          <div id="admMenuList" class="admMenuList"></div>
+        </div>
+
+        <!-- Config -->
+        <div id="aSettings" class="aPane">
+          <div class="card">
+            <h3>Configurações</h3>
+
+            <label>Nome da loja
+              <input id="cfgStoreName" type="text" />
+            </label>
+
+            <label>WhatsApp que recebe pedidos
+              <input id="cfgWhats" type="tel" inputmode="numeric" />
+            </label>
+
+            <hr class="hr" />
+
+            <h3>Pix</h3>
+            <label>Chave Pix
+              <input id="cfgPixKey" type="text" />
+            </label>
+            <label>Banco Pix
+              <input id="cfgPixBank" type="text" />
+            </label>
+            <label>Nome Pix
+              <input id="cfgPixName" type="text" />
+            </label>
+
+            <hr class="hr" />
+
+            <h3>Entrega</h3>
+            <label>Taxa de entrega
+              <select id="cfgDeliveryMode">
+                <option value="FREE">Grátis</option>
+                <option value="FIXED">Valor fixo</option>
+              </select>
+            </label>
+
+            <div id="cfgDeliveryValueWrap" class="hidden">
+              <label>Valor da entrega (R$)
+                <input id="cfgDeliveryValue" type="number" inputmode="decimal" step="0.01" placeholder="Ex: 5.00" />
+              </label>
+            </div>
+
+            <hr class="hr" />
+
+            <h3>Pedido mínimo</h3>
+            <label>Ativar pedido mínimo?
+              <select id="cfgMinEnabled">
+                <option value="NO">Não</option>
+                <option value="YES">Sim</option>
+              </select>
+            </label>
+
+            <div id="cfgMinValueWrap" class="hidden">
+              <label>Valor mínimo (R$)
+                <input id="cfgMinValue" type="number" inputmode="decimal" step="0.01" placeholder="Ex: 20.00" />
+              </label>
+            </div>
+
+            <div class="row gap" style="margin-top:14px;">
+              <button id="btnSaveCfg" class="primary">Salvar</button>
+            </div>
+
+            <p class="hint">Você pode trocar depois pro número e Pix da cliente.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <div id="toast" class="toast hidden"></div>
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottomNav">
+    <button class="navBtn active" data-nav="home">
+      <span class="navIcon">🏠</span>
+      <span class="navText">Início</span>
+    </button>
+    <button class="navBtn" data-nav="orders">
+      <span class="navIcon">🧾</span>
+      <span class="navText">Pedidos</span>
+    </button>
+    <button class="navBtn" data-nav="cart">
+      <span class="navIcon">🛒</span>
+      <span class="navText">Carrinho</span>
+      <span id="cartBadge" class="cartBadge hidden">0</span>
+    </button>
+  </nav>
+<!-- Modal de quantidade -->
+<div id="qtyModal" class="overlay hidden">
+  <div class="overlayCard">
+    <div class="row">
+      <strong id="qmName">Item</strong>
+      <button id="qmClose" class="iconBtn">✖️</button>
+    </div>
+
+    <div class="small" style="margin-top:6px;">
+      <span id="qmCat">Categoria</span> • <strong id="qmPrice">R$ 0,00</strong>
+    </div>
+
+    <div class="qtyPick">
+      <button id="qmMinus" class="qtyBig">−</button>
+      <div class="qtyNum" id="qmQty">1</div>
+      <button id="qmPlus" class="qtyBig">+</button>
+    </div>
+
+    <button id="qmAdd" class="primary full" style="margin-top:12px;">
+      Adicionar ao carrinho
+    </button>
+  </div>
+</div>
+
+<!-- Botão fixo "Finalizar" -->
+<div id="stickyCheckout" class="stickyCheckout hidden">
+  <button id="btnGoCart" class="primary full">
+    Finalizar pedido • <span id="stickyTotal">R$ 0,00</span>
+  </button>
+</div>
+<!-- Supabase (UMD) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- Seu app -->
+<script src="./app.js"></script>
+</html>
